@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace UnityCodeGen
 {
-    public sealed class GeneratorContext
+    public class GeneratorContext
     {
         private List<CodeText> _codeList = new List<CodeText>();
         internal IReadOnlyList<CodeText> codeList => _codeList;
