@@ -6,7 +6,7 @@ using UnityEditor;
 
 namespace UnityCodeGen
 {
-    internal static class ScriptFileGenerator
+    public static class ScriptFileGenerator
     {
         const string KEY_ISGENERATING = "UnityCodeGen-IsGenerating";
         const string EXTENSION_META = ".meta";
@@ -39,6 +39,38 @@ namespace UnityCodeGen
             else if (UnityCodeGenSettings.autoGenerateOnCompile)
             {
                 Generate();
+            }
+        }
+
+        public static void Generate<TAttribute, TContextAdditionalParam>(TContextAdditionalParam additionalParam)
+            where TAttribute : Attribute
+        {
+            if (isGenerating) return;
+            isGenerating = true;
+
+            // fileNames.Clear();
+            var generatorTypes = TypeCache.GetTypesDerivedFrom<ICodeGenerator<TContextAdditionalParam>>()
+                .Where(x => !x.IsAbstract && x.GetCustomAttribute<TAttribute>() != null);
+
+            var changed = false;
+            foreach (var t in generatorTypes)
+            {
+                var generator = (ICodeGenerator<TContextAdditionalParam>)Activator.CreateInstance(t);
+
+                var context = new GeneratorContext();
+
+                generator.Execute(context, additionalParam);
+
+                if (GenerateScriptFromContext(context))
+                {
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                AssetDatabase.Refresh();
+                AssetDatabase.SaveAssets();
             }
         }
 
